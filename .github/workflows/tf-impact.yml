@@ -27,12 +27,6 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup Terraform
-        uses: hashicorp/setup-python@v5
-        with:
-          terraform_version: ${{ env.TF_VERSION }}
-          terraform_wrapper: false
-
-      - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: ${{ env.TF_VERSION }}
@@ -59,12 +53,7 @@ jobs:
 
       - name: Terraform Plan
         working-directory: terraform
-        run: |
-          terraform plan -input=false -out=tfplan \
-            -var="db_password=DummyPassword123!"
-        # db_password is only needed for plan validation.
-        # We never actually apply this — plan only.
-        # In real projects use GitHub Secrets for this.
+        run: terraform plan -input=false -out=tfplan -var="db_password=DummyPassword123!"
 
       - name: Convert plan to JSON
         working-directory: terraform
