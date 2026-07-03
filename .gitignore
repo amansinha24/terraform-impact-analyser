@@ -1,0 +1,15 @@
+﻿**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.tfplan
+tfplan
+*.tfvars
+.terraform.lock.hcl
+crash.log
+analyser/plan.json
+__pycache__/
+*.py[cod]
+.env
+.venv
+.DS_Store
+Thumbs.db
