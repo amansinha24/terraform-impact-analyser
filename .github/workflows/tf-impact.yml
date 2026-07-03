@@ -10,6 +10,7 @@ on:
 permissions:
   contents: read
   pull-requests: write
+  id-token: write
 
 jobs:
   tf-impact:
@@ -44,6 +45,7 @@ jobs:
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ap-south-1
+          role-session-name: tf-impact-github-actions
 
       - name: Terraform Init
         working-directory: terraform
