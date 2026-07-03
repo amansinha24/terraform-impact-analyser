@@ -17,7 +17,7 @@ variable "environment" {
 variable "instance_type" {
   description = "EC2 instance type — change this to t3.small and raise a PR to demo tf-impact"
   type        = string
-  default     = "t3.micro"
+  default     = "t3.small"
 }
 
 variable "root_volume_size" {

@@ -1,0 +1,56 @@
+﻿{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "TerraformStateS3",
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetObject",
+        "s3:PutObject",
+        "s3:DeleteObject",
+        "s3:ListBucket",
+        "s3:GetBucketVersioning",
+        "s3:GetEncryptionConfiguration"
+      ],
+      "Resource": [
+        "arn:aws:s3:::tf-impact-demo-state-bucket",
+        "arn:aws:s3:::tf-impact-demo-state-bucket/*"
+      ]
+    },
+    {
+      "Sid": "TerraformStateDynamoDB",
+      "Effect": "Allow",
+      "Action": [
+        "dynamodb:GetItem",
+        "dynamodb:PutItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:DescribeTable"
+      ],
+      "Resource": "arn:aws:dynamodb:ap-south-1:350480401763:table/tf-impact-state-lock"
+    },
+    {
+      "Sid": "BedrockInvokeModel",
+      "Effect": "Allow",
+      "Action": [
+        "bedrock:InvokeModel"
+      ],
+      "Resource": "arn:aws:bedrock:ap-south-1::foundation-model/anthropic.claude-haiku-3-5-20241022-v1:0"
+    },
+    {
+      "Sid": "TerraformReadAWS",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:Describe*",
+        "ec2:Get*",
+        "rds:Describe*",
+        "elasticloadbalancing:Describe*",
+        "iam:GetRole",
+        "iam:GetPolicy",
+        "iam:ListRolePolicies",
+        "iam:GetRolePolicy",
+        "sts:GetCallerIdentity"
+      ],
+      "Resource": "*"
+    }
+  ]
+}

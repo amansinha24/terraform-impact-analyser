@@ -7,27 +7,20 @@ from prompts import build_system_prompt, build_analysis_prompt
 
 class AIAnalyser:
 
-    # Claude Haiku 3.5 on Amazon Bedrock
-    # Free tier available, fast, and cost-effective
-    MODEL_ID   = "us.anthropic.claude-haiku-3-5-20241022-v1:0"
+    MODEL_ID   = "anthropic.claude-haiku-3-5-20241022-v1:0"
     MAX_TOKENS = 4096
-    REGION     = "us-east-1"
+    REGION     = "ap-south-1"
 
     def __init__(self):
-        # Bedrock uses AWS credentials — same OIDC role
-        # already configured in GitHub Actions workflow.
-        # No separate API key needed.
         self.client = boto3.client(
             service_name="bedrock-runtime",
             region_name=self.REGION,
         )
 
     def analyse(self, plan_summary: dict) -> dict:
-        print("🤖 Sending plan to Claude Haiku 3.5 via Amazon Bedrock...")
+        print("Sending plan to Claude Haiku 3.5 via Amazon Bedrock ap-south-1...")
         start = time.time()
 
-        # Bedrock uses the Messages API format
-        # Same structure as Anthropic SDK but called via boto3
         body = json.dumps({
             "anthropic_version": "bedrock-2023-05-31",
             "max_tokens":        self.MAX_TOKENS,
@@ -47,13 +40,11 @@ class AIAnalyser:
             accept="application/json",
         )
 
-        elapsed = time.time() - start
-
-        # Parse the response body
+        elapsed       = time.time() - start
         response_body = json.loads(response["body"].read())
         raw_text      = response_body["content"][0]["text"]
+        usage         = response_body.get("usage", {})
 
-        usage = response_body.get("usage", {})
         print(f"   Done in {elapsed:.1f}s | "
               f"Tokens: {usage.get('input_tokens', '?')} in, "
               f"{usage.get('output_tokens', '?')} out")
@@ -62,9 +53,7 @@ class AIAnalyser:
 
     def _parse(self, raw: str) -> dict:
         cleaned = raw.strip()
-
-        # Remove markdown code fences if model added them
-        if cleaned.startswith("  "):
+        if cleaned.startswith("`"):
             lines   = cleaned.split("\n")
             cleaned = "\n".join(lines[1:-1]).strip()
 
