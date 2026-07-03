@@ -27,7 +27,7 @@ locals {
 }
 
 resource "aws_security_group" "alb_sg" {
-  name        = "-alb-sg"
+  name        = "${var.environment}-alb-sg"
   description = "Allow HTTP to ALB"
   vpc_id      = data.aws_vpc.default.id
   ingress {
@@ -46,7 +46,7 @@ resource "aws_security_group" "alb_sg" {
 }
 
 resource "aws_security_group" "ec2_sg" {
-  name        = "-ec2-sg"
+  name        = "${var.environment}-ec2-sg"
   description = "Allow traffic from ALB only"
   vpc_id      = data.aws_vpc.default.id
   ingress {
@@ -65,7 +65,7 @@ resource "aws_security_group" "ec2_sg" {
 }
 
 resource "aws_security_group" "rds_sg" {
-  name        = "-rds-sg"
+  name        = "${var.environment}-rds-sg"
   description = "Allow MySQL from EC2 only"
   vpc_id      = data.aws_vpc.default.id
   ingress {
@@ -88,14 +88,14 @@ resource "aws_instance" "app_server" {
     encrypted   = true
     tags        = local.common_tags
   }
-  tags = merge(local.common_tags, { Name = "-app-server" })
+  tags = merge(local.common_tags, { Name = "${var.environment}-app-server" })
   lifecycle {
     create_before_destroy = false
   }
 }
 
 resource "aws_lb" "app_alb" {
-  name               = "-app-alb"
+  name               = "${var.environment}-app-alb"
   internal           = false
   load_balancer_type = "application"
   security_groups    = [aws_security_group.alb_sg.id]
@@ -105,7 +105,7 @@ resource "aws_lb" "app_alb" {
 }
 
 resource "aws_lb_target_group" "app_tg" {
-  name     = "-app-tg"
+  name     = "${var.environment}-app-tg"
   port     = 8080
   protocol = "HTTP"
   vpc_id   = data.aws_vpc.default.id
@@ -136,13 +136,13 @@ resource "aws_lb_listener" "http" {
 }
 
 resource "aws_db_subnet_group" "main" {
-  name       = "-db-subnet-group"
+  name       = "${var.environment}-db-subnet-group"
   subnet_ids = data.aws_subnets.default.ids
   tags       = local.common_tags
 }
 
 resource "aws_db_instance" "app_db" {
-  identifier             = "-app-db"
+  identifier             = "${var.environment}-app-db"
   engine                 = "mysql"
   engine_version         = "8.0"
   instance_class         = var.db_instance_class
