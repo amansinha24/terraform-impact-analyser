@@ -1,44 +1,71 @@
 ﻿import json
 import os
 import time
-import anthropic
+import boto3
 from prompts import build_system_prompt, build_analysis_prompt
 
 
 class AIAnalyser:
 
-    MODEL      = "claude-sonnet-4-6"
+    # Claude Haiku 3.5 on Amazon Bedrock
+    # Free tier available, fast, and cost-effective
+    MODEL_ID   = "us.anthropic.claude-haiku-3-5-20241022-v1:0"
     MAX_TOKENS = 4096
+    REGION     = "us-east-1"
 
     def __init__(self):
-        api_key = os.environ.get("ANTHROPIC_API_KEY")
-        if not api_key:
-            raise ValueError("ANTHROPIC_API_KEY not set. Add it to GitHub Secrets.")
-        self.client = anthropic.Anthropic(api_key=api_key)
+        # Bedrock uses AWS credentials — same OIDC role
+        # already configured in GitHub Actions workflow.
+        # No separate API key needed.
+        self.client = boto3.client(
+            service_name="bedrock-runtime",
+            region_name=self.REGION,
+        )
 
     def analyse(self, plan_summary: dict) -> dict:
-        print("🤖 Sending plan to Claude API...")
+        print("🤖 Sending plan to Claude Haiku 3.5 via Amazon Bedrock...")
         start = time.time()
 
-        message = self.client.messages.create(
-            model=self.MODEL,
-            max_tokens=self.MAX_TOKENS,
-            system=build_system_prompt(),
-            messages=[{
-                "role":    "user",
-                "content": build_analysis_prompt(plan_summary),
-            }],
+        # Bedrock uses the Messages API format
+        # Same structure as Anthropic SDK but called via boto3
+        body = json.dumps({
+            "anthropic_version": "bedrock-2023-05-31",
+            "max_tokens":        self.MAX_TOKENS,
+            "system":            build_system_prompt(),
+            "messages": [
+                {
+                    "role":    "user",
+                    "content": build_analysis_prompt(plan_summary),
+                }
+            ],
+        })
+
+        response = self.client.invoke_model(
+            modelId=self.MODEL_ID,
+            body=body,
+            contentType="application/json",
+            accept="application/json",
         )
 
         elapsed = time.time() - start
-        print(f"   Done in {elapsed:.1f}s | Tokens: {message.usage.input_tokens} in, {message.usage.output_tokens} out")
 
-        return self._parse(message.content[0].text)
+        # Parse the response body
+        response_body = json.loads(response["body"].read())
+        raw_text      = response_body["content"][0]["text"]
+
+        usage = response_body.get("usage", {})
+        print(f"   Done in {elapsed:.1f}s | "
+              f"Tokens: {usage.get('input_tokens', '?')} in, "
+              f"{usage.get('output_tokens', '?')} out")
+
+        return self._parse(raw_text)
 
     def _parse(self, raw: str) -> dict:
         cleaned = raw.strip()
+
+        # Remove markdown code fences if model added them
         if cleaned.startswith("  "):
-            lines = cleaned.split("\n")
+            lines   = cleaned.split("\n")
             cleaned = "\n".join(lines[1:-1]).strip()
 
         try:
@@ -62,8 +89,8 @@ class AIAnalyser:
                     "affected_services": [],
                     "explanation":       f"Parse error: {e}",
                 },
-                "security_flags":               [],
-                "cost_observation":             None,
-                "key_risks":                    ["Automated analysis failed"],
-                "what_to_verify_before_apply":  ["Manual review required"],
+                "security_flags":              [],
+                "cost_observation":            None,
+                "key_risks":                   ["Automated analysis failed"],
+                "what_to_verify_before_apply": ["Manual review required"],
             }
