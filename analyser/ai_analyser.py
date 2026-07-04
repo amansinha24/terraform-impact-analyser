@@ -7,7 +7,9 @@ from prompts import build_system_prompt, build_analysis_prompt
 
 class AIAnalyser:
 
-    MODEL_ID   = "anthropic.claude-haiku-3-5-20241022-v1:0"
+    # For ap-south-1 (Mumbai), Haiku 4.5 requires
+    # global cross-region inference profile ID
+    MODEL_ID   = "global.anthropic.claude-haiku-4-5-20251001-v1:0"
     MAX_TOKENS = 4096
     REGION     = "ap-south-1"
 
@@ -18,7 +20,7 @@ class AIAnalyser:
         )
 
     def analyse(self, plan_summary: dict) -> dict:
-        print("Sending plan to Claude Haiku 3.5 via Amazon Bedrock ap-south-1...")
+        print("Sending plan to Claude Haiku 4.5 via Amazon Bedrock ap-south-1...")
         start = time.time()
 
         body = json.dumps({
