@@ -15,9 +15,9 @@ variable "environment" {
 }
 
 variable "instance_type" {
-  description = "EC2 instance type — change this to t3.small and raise a PR to demo tf-impact"
+  description = "EC2 instance type"
   type        = string
-  default     = "t3.small"
+  default     = "t3.micro"
 }
 
 variable "root_volume_size" {
@@ -29,7 +29,7 @@ variable "root_volume_size" {
 variable "db_instance_class" {
   description = "RDS instance class"
   type        = string
-  default     = "db.r7g.xlarge"
+  default     = "db.t3.micro"
 }
 
 variable "db_storage_gb" {

@@ -58,7 +58,7 @@ class RiskEngine:
 
             if rc.resource_type == "aws_instance":
                 for attr in rc.attribute_changes:
-                    if attr.attribute == "instance_type":
+                    if attr.attribute == "instance_type" and attr.before is not None:
                         flags.append(
                             f"WARNING: EC2 instance_type changing "
                             f"{attr.before} to {attr.after}. "

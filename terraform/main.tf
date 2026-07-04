@@ -19,15 +19,16 @@ data "aws_ami" "amazon_linux" {
 }
 
 locals {
+  env = var.environment == "" ? "dev" : var.environment
   common_tags = {
-    Environment = var.environment
+    Environment = local.env
     Project     = "tf-impact-demo"
     ManagedBy   = "Terraform"
   }
 }
 
 resource "aws_security_group" "alb_sg" {
-  name        = "${var.environment}-alb-sg"
+  name        = "tfimpact-${local.env}-alb-sg"
   description = "Allow HTTP to ALB"
   vpc_id      = data.aws_vpc.default.id
   ingress {
@@ -46,7 +47,7 @@ resource "aws_security_group" "alb_sg" {
 }
 
 resource "aws_security_group" "ec2_sg" {
-  name        = "${var.environment}-ec2-sg"
+  name        = "tfimpact-${local.env}-ec2-sg"
   description = "Allow traffic from ALB only"
   vpc_id      = data.aws_vpc.default.id
   ingress {
@@ -65,7 +66,7 @@ resource "aws_security_group" "ec2_sg" {
 }
 
 resource "aws_security_group" "rds_sg" {
-  name        = "${var.environment}-rds-sg"
+  name        = "tfimpact-${local.env}-rds-sg"
   description = "Allow MySQL from EC2 only"
   vpc_id      = data.aws_vpc.default.id
   ingress {
@@ -88,24 +89,24 @@ resource "aws_instance" "app_server" {
     encrypted   = true
     tags        = local.common_tags
   }
-  tags = merge(local.common_tags, { Name = "${var.environment}-app-server" })
+  tags = merge(local.common_tags, { Name = "tfimpact-${local.env}-app-server" })
   lifecycle {
     create_before_destroy = false
   }
 }
 
 resource "aws_lb" "app_alb" {
-  name               = "${var.environment}-app-alb"
+  name               = "tfimpact-${local.env}-alb"
   internal           = false
   load_balancer_type = "application"
   security_groups    = [aws_security_group.alb_sg.id]
   subnets            = data.aws_subnets.default.ids
-  enable_deletion_protection = var.environment == "prod" ? true : false
+  enable_deletion_protection = false
   tags = local.common_tags
 }
 
 resource "aws_lb_target_group" "app_tg" {
-  name     = "${var.environment}-app-tg"
+  name     = "tfimpact-${local.env}-tg"
   port     = 8080
   protocol = "HTTP"
   vpc_id   = data.aws_vpc.default.id
@@ -136,13 +137,13 @@ resource "aws_lb_listener" "http" {
 }
 
 resource "aws_db_subnet_group" "main" {
-  name       = "${var.environment}-db-subnet-group"
+  name       = "tfimpact-${local.env}-db-subnet-group"
   subnet_ids = data.aws_subnets.default.ids
   tags       = local.common_tags
 }
 
 resource "aws_db_instance" "app_db" {
-  identifier             = "${var.environment}-app-db"
+  identifier             = "tfimpact-${local.env}-db"
   engine                 = "mysql"
   engine_version         = "8.0"
   instance_class         = var.db_instance_class
@@ -152,9 +153,9 @@ resource "aws_db_instance" "app_db" {
   password               = var.db_password
   db_subnet_group_name   = aws_db_subnet_group.main.name
   vpc_security_group_ids = [aws_security_group.rds_sg.id]
-  backup_retention_period = var.environment == "prod" ? 7 : 1
-  skip_final_snapshot     = var.environment == "prod" ? false : true
-  deletion_protection     = var.environment == "prod" ? true : false
+  backup_retention_period = 1
+  skip_final_snapshot     = true
+  deletion_protection     = false
   storage_encrypted       = true
   tags                    = local.common_tags
 }
