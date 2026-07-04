@@ -10,6 +10,7 @@ on:
 permissions:
   contents: read
   pull-requests: write
+  id-token: write
 
 jobs:
   tf-impact:
@@ -39,15 +40,12 @@ jobs:
       - name: Install Python dependencies
         run: pip install -r analyser/requirements.txt
 
-      # This single step gives access to BOTH:
-      # 1. Terraform state in S3
-      # 2. Amazon Bedrock for AI analysis
-      # One role, two purposes. Clean architecture.
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: ${{ env.AWS_REGION }}
+          aws-region: ap-south-1
+          role-session-name: tf-impact-github-actions
 
       - name: Terraform Init
         working-directory: terraform
@@ -55,14 +53,12 @@ jobs:
 
       - name: Terraform Plan
         working-directory: terraform
-        run: terraform plan -input=false -out=tfplan
+        run: terraform plan -input=false -out=tfplan -var="db_password=DummyPassword123!" -var="environment=dev"
 
       - name: Convert plan to JSON
         working-directory: terraform
         run: terraform show -json tfplan > ../analyser/plan.json
 
-      # No ANTHROPIC_API_KEY needed anymore.
-      # Bedrock access comes from the AWS OIDC role above.
       - name: Run TF Impact Analysis
         env:
           PR_NUMBER: ${{ github.event.pull_request.number }}
