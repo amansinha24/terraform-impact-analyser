@@ -29,7 +29,7 @@ variable "root_volume_size" {
 variable "db_instance_class" {
   description = "RDS instance class"
   type        = string
-  default     = "db.t3.micro"
+  default     = "db.r7g.xlarge"
 }
 
 variable "db_storage_gb" {
