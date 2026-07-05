@@ -53,7 +53,7 @@ jobs:
 
       - name: Terraform Plan
         working-directory: terraform
-        run: terraform plan -input=false -out=tfplan -var="db_password=DummyPassword123!" -var="environment=dev"
+        run: terraform plan -input=false -out=tfplan -var="db_password=TfImpact2024" -var="environment=dev" -var="root_volume_size=30"
 
       - name: Convert plan to JSON
         working-directory: terraform
